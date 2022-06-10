@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Программные инструменты и навыки{% endblock %}
+{% block content %}
+  {% load user_filters %}
+  <div class="container py-5 row">
+    <aside class="col-12 col-md-3">
+      <h4>Вот что я умею:</h4>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">
+          Python
+        </li>
+        <li class="list-group-item">
+          Django
+        </li>
+        <li class="list-group-item">
+          GIT
+        </li>
+        <li class="list-group-item">
+          Bootstrap
+        </li>
+      </ul>
+    </aside>
+    <article class="col-12 col-md-9" style="padding-left: 40px">
+      <h1>Что мне помогло создать этот проект:</h1>
+      <p>
+        <img style="margin-right: 50px"
+             src="https://xpertlab.com/wp-content/uploads/2020/01/pyCharm.png"
+             width=25% alt="">
+        Этот сайт разрабатывался с помощью IDE PyCharm
+      </p>
+      <p>
+        <img style="margin-right: 50px"
+             src="https://onix-systems.com/web/uploads/Z7GxFMfCznWlJuqOQ_cI4F8-bcs_1sw8.jpg"
+             width=25% alt="">
+        на языке Python с применением фреймворков Django
+      </p>
+      <p>
+        <img style="margin-right: 50px"
+             src="https://avatars.mds.yandex.net/i?id=4e9c54ea63b0f18527492b8a9a9d2429-5905066-images-thumbs&n=13"
+             width=25% alt="">
+        и Bootstrap.
+      </p>
+    </article>
+  </div>
+{% endblock %}
