@@ -44,13 +44,12 @@ def post_detail(request, post_id):
     author = post.author
     form = CommentForm()
     comments = (
-        Comment.objects
-            .select_related("author", "post").filter(post=post)
+        Comment.objects.select_related("author", "post").filter(post=post)
     )
     context = {
         'form': form, 'author': author, 'post': post, 'comments': comments
     }
-    return render( request, 'posts/post_detail.html', context)
+    return render(request, 'posts/post_detail.html', context)
 
 
 @login_required
