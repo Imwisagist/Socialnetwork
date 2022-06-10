@@ -56,10 +56,10 @@ class PostsURLSTests(TestCase):
         self.author_client = Client()
         self.author_client.force_login(self.author)
 
-    # def test_page_404(self):
-    #     """Неизвестная страница возвращает 404."""
-    #     response = self.client.get('/test/')
-    #     self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+    def test_page_404(self):
+        """Неизвестная страница возвращает 404."""
+        response = self.client.get('/test/')
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
     def test_all_urls_available_for_author(self):
         """Все адреса доступны автору."""
