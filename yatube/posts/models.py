@@ -81,12 +81,12 @@ class Comment(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name="comments",
-        verbose_name="Автор комментария"
+        verbose_name="Автор комментария",
     )
-    text = models.TextField(verbose_name="Текст комментария")
+    text = models.TextField("Текст комментария",)
     created = models.DateTimeField(
         "Дата публикации комментария",
-        auto_now_add=True
+        auto_now_add=True,
     )
 
     class Meta:

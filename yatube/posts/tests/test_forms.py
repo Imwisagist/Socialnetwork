@@ -23,18 +23,18 @@ class PostCreateFormTests(TestCase):
         cls.ZERO_POSTS = 0
         cls.ONE = 1
         cls.group = Group.objects.create(
-            title='Заголовок2',
-            slug='nice_slug2',
-            description='Тестовое описание2',
+            title='Rammstein',
+            slug='rammy',
+            description='Для любителей творчества Rammstein',
         )
         cls.user = User.objects.create_user(username='Liar')
         cls.post = Post.objects.create(
-            text='Тестовый текст',
+            text='Выпьем за любовь!',
             author=User.objects.create_user(username='Dima'),
             group=Group.objects.create(
-                title='Заголовок',
-                slug='nice_slug',
-                description='Тестовое описание',
+                title='Сборник лучших тостов для застолья',
+                slug='osujday_alkohol',
+                description='Тосты на все случаи жизни',
             ),
         )
 
@@ -53,7 +53,7 @@ class PostCreateFormTests(TestCase):
         """Валидная форма создает запись в Post."""
         posts_count = Post.objects.count()
         form_data = {
-            'text': 'Тестовый текст2',
+            'text': 'TRACK:ZICK-ZACK',
             'group': self.group.id,
         }
         response = self.author_client.post(
@@ -78,7 +78,7 @@ class PostCreateFormTests(TestCase):
         post = Post.objects.first()
         posts_count = Post.objects.count
         form_data = {
-            'text': 'Измененный тестовый текст',
+            'text': 'TRACK:AUSLANDER',
             'group': self.group.id
         }
         response_edit = self.author_client.post(
@@ -106,10 +106,10 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(posts_count, Post.objects.count)
 
     def test_guest_new_post(self):
-        """Неавторизованный не может создавать посты"""
+        """Неавторизованный пользователь не может создавать посты"""
         posts_count = Post.objects.count()
         form_data = {
-            'text': 'Пост от неавторизованного пользователя',
+            'text': 'А можно мне пост написать? Я-Гость',
             'group': self.group.id
         }
         self.client.post(
@@ -118,20 +118,21 @@ class PostCreateFormTests(TestCase):
             follow=True,
         )
         self.assertFalse(Post.objects.filter(
-            text='Пост от неавторизованного пользователя').exists())
+            text='А можно мне пост написать? Я-Гость').exists())   # НЕТ!
         self.assertEqual(posts_count, Post.objects.count())
         login_url = reverse("users:login")
-        reverse_name = reverse("posts:post_create", None)
-        response = self.client.get(reverse_name, follow=True)
+        reverse_url = reverse("posts:post_create", None)
+        response = self.client.get(reverse_url, follow=True)
         self.assertRedirects(
             response,
-            f'{login_url}?{REDIRECT_FIELD_NAME}={reverse_name}',
+            f'{login_url}?{REDIRECT_FIELD_NAME}={reverse_url}',
             target_status_code=HTTPStatus.OK, status_code=HTTPStatus.FOUND,
         )
 
     def test_upload_image(self):
         """При отправке поста с картинкой через форму PostForm
-        создаётся запись в базе данных."""
+        создаётся запись в базе данных.
+        """
         small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
             b'\x01\x00\x80\x00\x00\x00\x00\x00'

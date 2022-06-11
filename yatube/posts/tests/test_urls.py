@@ -1,8 +1,10 @@
-from django.urls import reverse
-from django.test import TestCase, Client
 from http import HTTPStatus
-from ..models import Group, Post
+
 from django.contrib.auth import get_user_model, REDIRECT_FIELD_NAME
+from django.test import TestCase, Client
+from django.urls import reverse
+
+from ..models import Group, Post
 
 User = get_user_model()
 
@@ -14,12 +16,12 @@ class PostsURLSTests(TestCase):
         cls.author = User.objects.create_user(username='Dimentor')
         cls.user = User.objects.create_user(username='Pavlentiy')
         cls.group = Group.objects.create(
-            title='Тестовая группа',
+            title='Кулинарные причуды',
             slug='love_long_slug',
-            description='Описание группы',
+            description='Готовим самые изысканные блюда вместе с мастер-шефом',
         )
         cls.post = Post.objects.create(
-            text='Отличный текст',
+            text='Отличный текст для этого поста',
             author=cls.author,
             group=cls.group,
         )
@@ -30,7 +32,7 @@ class PostsURLSTests(TestCase):
             ("posts:profile", (cls.author.username,), 'posts/profile.html'),
             ("posts:post_detail", (cls.post.id,), 'posts/post_detail.html'),
             ("posts:post_create", None, 'posts/create_post.html'),
-            ("posts:follow_index", None, 'posts/follow.html')
+            ("posts:follow_index", None, 'posts/follow.html'),
         )
         cls.reverses_args_urls_tuple = (
             ("posts:index", None, '/'),
@@ -73,8 +75,27 @@ class PostsURLSTests(TestCase):
         response = self.client.get('/test/')
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
+    def test_all_reverses_is_correct(self):
+        """Все реверсы работают корректно."""
+        for reverse_name, args, url in self.reverses_args_urls_tuple:
+            with self.subTest("Что-то пошло не так на урле", url=url):
+                self.assertEqual(reverse(reverse_name, args=args), url)
+
+    def test_all_templates_correct_use(self):
+        """Все шаблоны используются по назначению."""
+        for reverse_name, args, template in self.reverse_args_templates_tuple:
+            with self.subTest("Что-то пошло не так на урле", url=reverse_name):
+                response = self.author_client.get(
+                    reverse(reverse_name, args=args)
+                )
+                self.assertTemplateUsed(response, template)
+
     def test_all_urls_available_for_author(self):
-        """Все адреса доступны автору."""
+        """Со страниц удаления поста, подписки\отписки в профиле автора
+        редиректит на страницу профиля автора. Со страницы добавления
+        комментария автора редиректит на страницу подробностей.
+        Остальные адреса автору доступны.
+        """
         redirect_on_profile_tuple = (
             "posts:post_delete",
             "posts:profile_unfollow",
@@ -103,8 +124,11 @@ class PostsURLSTests(TestCase):
                     self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_urls_available_for_not_author(self):
-        """Редактирование поста для НЕавтора приводит к редиректу на страницу
-        подробностей, остальные страницы доступны.
+        """НЕавтора редиректит со страниц редактирования поста и
+         добавления комментария на страницу подробностей.
+         Также НЕавтора редиректит со страниц удаления поста,
+         подписки и отписки в профиле на страницу профиля.
+         Остальные страницы доступны для НЕавтора.
         """
         redirect_on_post_detail_reverse_names_tuple = (
             "posts:post_edit",
@@ -143,12 +167,13 @@ class PostsURLSTests(TestCase):
                     )
                 else:
                     response = self.author_client.get(
-                        reverse(reverse_name, args=args))
+                        reverse(reverse_name, args=args)
+                    )
                     self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_urls_available_for_guest(self):
-        """С адресов в кортеже redirect происходит переадресация,
-        остальные адреса доступны для анонима.
+        """Для анонима с  адресов в кортеже redirect_urls происходит
+        переадресация на страницу авторизации, остальные адреса доступны.
         """
         redirect_urls_tuple = (
             "posts:post_create",
@@ -176,18 +201,3 @@ class PostsURLSTests(TestCase):
                 else:
                     response = self.client.get(reverse(revers, args=args))
                     self.assertEqual(response.status_code, HTTPStatus.OK)
-
-    def test_all_reverses_is_correct(self):
-        """Все реверсы работают корректно."""
-        for reverse_name, args, url in self.reverses_args_urls_tuple:
-            with self.subTest("Что-то пошло не так на урле", url=url):
-                self.assertEqual(reverse(reverse_name, args=args), url)
-
-    def test_all_templates_correct_use(self):
-        """Все шаблоны используются по назначению."""
-        for reverse_name, args, template in self.reverse_args_templates_tuple:
-            with self.subTest("Что-то пошло не так на урле", url=reverse_name):
-                response = self.author_client.get(
-                    reverse(reverse_name, args=args)
-                )
-                self.assertTemplateUsed(response, template)
