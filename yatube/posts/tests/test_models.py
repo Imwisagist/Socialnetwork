@@ -89,7 +89,7 @@ class PostModelTest(TestCase):
         )
 
     def test_all_models_fields_have_correct_help_text(self) -> None:
-        """Все поля моделей имеют корректные help_text"""
+        """Все поля моделей имеют корректные help_text!"""
         post_fields_expectations_tuple = (
             ('text', "Напишите текст поста"),
             ('author', "Задайте автора поста"),
