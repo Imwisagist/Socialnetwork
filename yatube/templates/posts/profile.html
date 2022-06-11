@@ -5,6 +5,7 @@
     {% include 'posts/includes/info_user.html' %}
   </div>
   <div class="mb-5">
+  {% if request.user != author %}
     {% if following %}
       <a
           class="btn btn-lg btn-light"
@@ -19,6 +20,7 @@
         Подписаться
       </a>
     {% endif %}
+  {% endif %}
   </div>
   <div class="col-md-9">
     {% for post in page_obj %}

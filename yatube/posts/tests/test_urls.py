@@ -29,8 +29,8 @@ class PostsURLSTests(TestCase):
             ("posts:group_posts", (cls.group.slug,), 'posts/group_list.html'),
             ("posts:profile", (cls.author.username,), 'posts/profile.html'),
             ("posts:post_detail", (cls.post.id,), 'posts/post_detail.html'),
-            ("posts:post_edit", (cls.post.id,), 'posts/create_post.html'),
             ("posts:post_create", None, 'posts/create_post.html'),
+            ("posts:follow_index", None, 'posts/follow.html')
         )
         cls.reverses_args_urls_tuple = (
             ("posts:index", None, '/'),
@@ -47,7 +47,19 @@ class PostsURLSTests(TestCase):
             ("posts:post_edit", (cls.post.id,),
              f'/posts/{cls.post.id}/edit/'),
 
-            ("posts:post_create", None, '/create/'),
+            ("posts:add_comment", (cls.post.id,),
+             f'/posts/{cls.post.id}/comment/'),
+
+            ("posts:follow_index", None, '/follow/'),
+
+            ("posts:profile_follow", (cls.author.username,),
+             f'/profile/{cls.post.author}/follow/'),
+
+            ("posts:profile_unfollow", (cls.author.username,),
+             f'/profile/{cls.post.author}/unfollow/'),
+
+            ("posts:post_delete", (cls.post.id,),
+             f'/posts/{cls.post.id}/delete/'),
         )
 
     def setUp(self):
@@ -63,20 +75,47 @@ class PostsURLSTests(TestCase):
 
     def test_all_urls_available_for_author(self):
         """Все адреса доступны автору."""
+        redirect_on_profile_tuple = (
+            "posts:post_delete",
+            "posts:profile_unfollow",
+            "posts:profile_follow",
+        )
         for reverse_name, args, _ in self.reverses_args_urls_tuple:
             with self.subTest("Что-то пошло не так на урле", url=reverse_name):
                 response = self.author_client.get(
                     reverse(reverse_name, args=args)
                 )
-                self.assertEqual(response.status_code, HTTPStatus.OK)
+                if reverse_name in redirect_on_profile_tuple:
+                    self.assertRedirects(
+                        response, reverse('posts:profile', args=(self.author,)),
+                        target_status_code=HTTPStatus.OK,
+                        status_code=HTTPStatus.FOUND,
+                    )
+                elif reverse_name == "posts:add_comment":
+                    self.assertRedirects(
+                        response, reverse('posts:post_detail', args=args),
+                        target_status_code=HTTPStatus.OK,
+                        status_code=HTTPStatus.FOUND,
+                    )
+                else:
+                    self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_urls_available_for_not_author(self):
         """Редактирование поста для НЕавтора приводит к редиректу на страницу
         подробностей, остальные страницы доступны.
         """
+        redirect_on_post_detail_reverse_names_tuple = (
+            "posts:post_edit",
+            "posts:add_comment",
+        )
+        redirect_on_profile_reverse_names_tuple = (
+            "posts:post_delete",
+            "posts:profile_follow",
+            "posts:profile_unfollow",
+        )
         for reverse_name, args, _ in self.reverses_args_urls_tuple:
             with self.subTest("Что-то пошло не так на урле", url=reverse_name):
-                if reverse_name == "posts:post_edit":
+                if reverse_name in redirect_on_post_detail_reverse_names_tuple:
                     response = self.authorized_client.get(
                         reverse(reverse_name, args=args), follow=True,
                     )
@@ -88,21 +127,41 @@ class PostsURLSTests(TestCase):
                         target_status_code=HTTPStatus.OK,
                         status_code=HTTPStatus.FOUND,
                     )
+                elif reverse_name in redirect_on_profile_reverse_names_tuple:
+                    response = self.author_client.get(
+                        reverse(reverse_name, args=args), follow=True,
+                    )
+                    self.assertRedirects(
+                        response, reverse(
+                            'posts:profile',
+                            args=(self.post.author,)
+                        ),
+                        target_status_code=HTTPStatus.OK,
+                        status_code=HTTPStatus.FOUND,
+                    )
                 else:
-                    response = self.authorized_client.get(
+                    response = self.author_client.get(
                         reverse(reverse_name, args=args))
                     self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_urls_available_for_guest(self):
-        """С адресов создания и редактирования происходит переадресация,
+        """С адресов в кортеже redirect происходит переадресация,
         остальные адреса доступны для анонима.
         """
-        redirect_urls = ("posts:post_create", "posts:post_edit")
+        redirect_urls_tuple = (
+            "posts:post_create",
+            "posts:post_edit",
+            "posts:add_comment",
+            "posts:follow_index",
+            "posts:profile_follow",
+            "posts:profile_unfollow",
+            "posts:post_delete"
+        )
         for revers, args, _ in self.reverses_args_urls_tuple:
             reverse_name = reverse(revers, args=args)
             login_url = reverse('users:login')
             with self.subTest("Что-то пошло не так на урле", url=revers):
-                if revers in redirect_urls:
+                if revers in redirect_urls_tuple:
                     response = self.client.get(
                         reverse(revers, args=args), follow=True
                     )

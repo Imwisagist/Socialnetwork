@@ -31,7 +31,6 @@ class Group(models.Model):
 
 
 class Post(models.Model):
-
     text = models.TextField(
         "Текст поста",
         help_text='Напишите текст поста'
@@ -72,22 +71,47 @@ class Post(models.Model):
 
 
 class Comment(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE,
-                             related_name="comments")
-    author = models.ForeignKey(User, on_delete=models.CASCADE,
-                               related_name="comments")
-    text = models.TextField()
-    created = models.DateTimeField("Дата публикации", auto_now_add=True)
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name="comments",
+        verbose_name="Пост с этим комментарием",
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="comments",
+        verbose_name="Автор комментария"
+    )
+    text = models.TextField(verbose_name="Текст комментария")
+    created = models.DateTimeField(
+        "Дата публикации комментария",
+        auto_now_add=True
+    )
 
     class Meta:
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
         ordering = ('-created',)
 
     def __str__(self):
-        return self.text
+        return self.text[:LIMIT_CHARS]
 
 
 class Follow(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE,
-                             related_name="follower")
-    author = models.ForeignKey(User, on_delete=models.CASCADE,
-                               related_name="following")
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="follower",
+        verbose_name="Подписчик"
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="following",
+        verbose_name="Автор"
+    )
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'

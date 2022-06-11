@@ -8,9 +8,18 @@
         {{ author }}
       </div>
       <ul class="list-group list-group-flush">
-        <div class="h6 text-muted">
-          Всего записей: {{ author.posts.count }}
-        </div>
+        <li class="list-group-item">
+          <div class="h6 text-muted">
+            Подписчиков: {{ author.following.count }} <br/>
+            Подписан: {{ author.follower.count }}
+          </div>
+        </li>
+        <li class="list-group-item">
+          <div class="h6 text-muted">
+            Всего записей: {{ author.posts.count }}
+          </div>
+        </li>
+      </ul>
       </ul>
     </div>
   </div>
