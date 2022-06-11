@@ -50,7 +50,6 @@ class PostModelTest(TestCase):
                         field, expectation
                     )
 
-
     def test_all_models_fields_have_correct_verboses(self) -> None:
         """Все поля моделей имеют корректные verbose_name"""
         post_fields_expectations_tuple = (
