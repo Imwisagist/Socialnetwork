@@ -61,9 +61,11 @@ class PostsViewsTests(TestCase):
         cls.reverse_names_args_flags_tuple = (
             ("posts:index", None, None),
             ("posts:group_posts", (cls.post.group.slug,), None),
-            ("posts:profile", (cls.post.author.username,), None),
+            ("posts:profile", (cls.post.author,), None),
             ("posts:post_detail", (cls.post.id,), True),
+            ("posts:follow_index", None, None),
         )
+        Follow.objects.create(user=cls.user, author=cls.post.author)
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -167,48 +169,36 @@ class PostsViewsTests(TestCase):
 
     def test_post_image_contain_in_context(self):
         """На страницах ниже изображение передаётся в словаре context
-        (Главная, страница группы, подробная информация, профиль)"""
+        (Главная, страница группы, подробная информация,
+        профиль, страница постов от подписок)"""
         cache.clear()
         for reverse_name, args, _ in self.reverse_names_args_flags_tuple:
             with self.subTest("Проблема на урле", url=reverse_name):
                 response = self.author_client.get(reverse(reverse_name,
                                                           args=args))
-                if reverse_name == "posts:post_detail":
-                    post = response.context.get('post')
-                else:
-                    post = response.context.get('page_obj')[0]
-                self.assertTrue(post.image)
-                self.assertEqual(post.image, self.post.image)
+                self.assertContains(response, text="<img")
 
     def test_comment_on_the_record_can_only_authorized_user(self):
         """Комментировать может только авторизованный пользователь"""
         self.authorized_client.post(
-            f'/posts/{self.post.id}/comment/',
+            reverse("posts:add_comment", args=(self.post.id,)),
             {'text': "Лучшему ревьюеру ЯП посвящается!)"},
             follow=True
         )
-        response = self.authorized_client.get(f'/posts/{self.post.id}/')
+        response = self.authorized_client.get(
+            reverse("posts:post_detail", args=(self.post.id,))
+        )
         self.assertContains(response, 'Лучшему ревьюеру ЯП посвящается!)')
         self.authorized_client.logout()
         self.authorized_client.post(
-            f'/posts/{self.post.id}/comment/',
+            reverse("posts:add_comment", args=(self.post.id,)),
             {'text': "Комментарий от Бабайки"},
             follow=True
         )
-        response = self.authorized_client.get(f'/posts/{self.post.id}/')
+        response = self.authorized_client.get(
+            reverse("posts:post_detail", args=(self.post.id,))
+        )
         self.assertNotContains(response, 'Комментарий от Бабайки')
-
-    # def test_after_successful_sending_comment_appears_on_the_page(self):
-    #     """После успешной отправки комментарий появляется на странице"""
-    #     self.authorized_client.post(
-    #         f'/posts/{self.post.id}/comment/',
-    #         {'text': "И на что тут смотреть? Аффтар выпей яду!"},
-    #         follow=True
-    #     )
-    #     response = self.authorized_client.get(f'/posts/{self.post.id}/')
-    #     self.assertContains(
-    #     response, 'И на что тут смотреть? Аффтар выпей яду!'
-    #     )
 
 
 class PaginatorViewsTest(TestCase):
@@ -274,10 +264,12 @@ class CacheTests(TestCase):
 
     def test_index_cache(self):
         """Тест кэширования главной страницы"""
+        Post.objects.create(
+            text="Не понимаю теорию ЯП. Помогите!",
+            author=self.author,
+        )
         response_1 = self.author_client.get(reverse('posts:index'))
-        post = Post.objects.first()
-        post.text = 'Волосатый кокосик)'
-        post.save()
+        Post.objects.filter(text="Не понимаю теорию ЯП. Помогите!").delete()
         response_2 = self.author_client.get(reverse('posts:index'))
         self.assertEqual(response_1.content, response_2.content)
         cache.clear()
@@ -291,14 +283,17 @@ class FollowTests(TestCase):
         super().setUpClass()
         cls.ZERO = 0
         cls.ONE = 1
+        cls.user_follower = User.objects.create_user(username='follower')
+        cls.user_following = User.objects.create_user(username='following')
+        Follow.objects.create(
+            user=cls.user_follower, author=cls.user_following
+        )
+        cls.post = Post.objects.create(
+            author=cls.user_following,
+            text='Я победил временные папки!'
+        )
 
     def setUp(self):
-        self.user_follower = User.objects.create_user(username='follower')
-        self.user_following = User.objects.create_user(username='following')
-        self.post = Post.objects.create(
-            author=self.user_following,
-            text='Я так и не победил временные папки:c'
-        )
         self.client_follower = Client()
         self.client_following = Client()
         self.client_follower.force_login(self.user_follower)
@@ -314,6 +309,7 @@ class FollowTests(TestCase):
 
     def test_follow_unfollow(self):
         """Авторизованный пользователь может отписаться"""
+        self.assertEqual(Follow.objects.all().count(), self.ONE)
         self.client_follower.get(
             reverse('posts:profile_unfollow',
                     args=(self.user_following.username,))
@@ -322,10 +318,13 @@ class FollowTests(TestCase):
 
     def test_subscription_feed(self):
         """Запись появляется только в ленте подписчиков"""
-        Follow.objects.create(user=self.user_follower,
-                              author=self.user_following)
-        response = self.client_follower.get('/follow/')
+        self.assertEqual(Follow.objects.all().count(), self.ONE)
+        response = self.client_follower.get(
+            reverse("posts:follow_index", None)
+        )
         post = response.context["page_obj"][0].text
         self.assertEqual(post, self.post.text)
-        response = self.client_following.get('/follow/')
+        response = self.client_following.get(
+            reverse("posts:follow_index", None)
+        )
         self.assertNotContains(response, self.post.text)
