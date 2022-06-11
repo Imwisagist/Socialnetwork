@@ -317,7 +317,7 @@ class FollowTests(TestCase):
         self.assertEqual(Follow.objects.all().count(), self.ZERO)
 
     def test_subscription_feed(self):
-        """Запись появляется только в ленте подписчиков"""
+        """Запись появляется только в ленте подписчиков!"""
         self.assertEqual(Follow.objects.all().count(), self.ONE)
         response = self.client_follower.get(
             reverse("posts:follow_index", None)
