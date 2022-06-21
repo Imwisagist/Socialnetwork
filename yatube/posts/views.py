@@ -10,7 +10,7 @@ User = get_user_model()
 
 
 def index(request):
-    posts_list = Post.objects.select_related('author', 'group').all()
+    posts_list = Post.objects.select_related('author', 'group')
     page_obj = paginate_posts(request, posts_list)
     context = {'page_obj': page_obj}
     return render(request, 'posts/index.html', context)
@@ -44,11 +44,14 @@ def profile(request, username):
 
 
 def post_detail(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
-    form = CommentForm()
-    comments = (
-        Comment.objects.select_related("author", "post").filter(post=post)
+    queryset = (
+        Post.objects
+            .select_related('author', 'group')
+            .prefetch_related('comments__author')
     )
+    post = get_object_or_404(queryset, id=post_id)
+    form = CommentForm()
+    comments = post.comments.all()
     context = {
         'form': form, 'post': post, 'comments': comments
     }
@@ -106,6 +109,12 @@ def add_comment(request, post_id):
         comment.save()
     return redirect('posts:post_detail', post_id=post_id)
 
+@login_required
+def comment_delete(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)
+    if request.user == comment.author:
+        comment.delete()
+    return redirect('posts:post_detail', post_id=comment.post.id)
 
 @login_required
 def follow_index(request):

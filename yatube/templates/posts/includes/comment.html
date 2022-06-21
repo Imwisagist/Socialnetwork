@@ -2,6 +2,10 @@
 
 
 {% if user.is_authenticated %}
+  <hr>
+  <h5 class="mt-0">
+    Всего комментариев: {{ comments.count }}
+  </h5>
   <div class="card my-4">
     <h5 class="card-header">Добавить комментарий:</h5>
     <div class="card-body">
@@ -15,18 +19,28 @@
     </div>
   </div>
 {% endif %}
-
 {% for comment in comments %}
-  <div class="media mb-4">
-    <div class="media-body">
-      <h5 class="mt-0">
-        <a href="{% url 'posts:profile' comment.author.username %}">
-          {{ comment.author.username }}
-        </a>
-      </h5>
+  <div class="d-flex justify-content-between align-items-center">
+    <div class="media mb-4">
+      <div class="media-body">
+        <h5 class="mt-0">
+          <a href="{% url 'posts:profile' comment.author.username %}">
+            {{ comment.author.username }}
+          </a>
+        </h5>
         <p>
-         {{ comment.text|linebreaksbr }}
+          {{ comment.text|linebreaksbr }}
         </p>
+        {% if request.user == comment.author %}
+          <a class="btn btn-danger"
+             href="{% url 'posts:comment_delete' comment.id %}">
+            Удалить комментарий
+          </a>
+        {% endif %}
       </div>
     </div>
+    <small class="text-muted">
+      Опубликовано: <br>{{ comment.created|date:"d M Y" }}</small>
+  </div>
+  <hr>
 {% endfor %}

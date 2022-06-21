@@ -6,6 +6,7 @@
   <div class="row">
     <aside class="col-12 col-md-3">
       <ul class="list-group list-group-flush">
+        <hr>
         <li class="list-group-item">
           Дата публикации: {{ post.pub_date|date:"d M Y" }}
         </li>
@@ -14,9 +15,11 @@
             Группа: {{ post.group }}
             <br>
             <a href="{% url 'posts:group_posts' post.group.slug %}">#
-              {{ post.group }}</a> {% else %}
+              {{ post.group }}</a>
+            {% else %}
             <span
-                style='color: blue'>Этой публикации нет ни в одном сообществе.</span>
+                style='color: blue'>Этой публикации нет ни в одном сообществе.
+            </span>
           </li>
         {% endif %}
         <li class="list-group-item">
@@ -32,6 +35,15 @@
             все посты автора - {{ post.author.username }}
           </a>
         </li>
+        {% if request.user == post.author %}
+          <a class="btn btn-primary" href="{% url 'posts:post_edit' post.id %}">
+            Редактировать запись
+          </a>
+          <a class="btn btn-danger"
+             href="{% url 'posts:post_delete' post.id %}">
+            Удалить запись
+          </a>
+        {% endif %}
       </ul>
     </aside>
     <article class="col-12 col-md-9">
@@ -41,14 +53,6 @@
       <p>
         {{ post.text|linebreaksbr }}
       </p>
-      {% if request.user == post.author %}
-        <a class="btn btn-primary" href="{% url 'posts:post_edit' post.id %}">
-          Редактировать запись
-        </a>
-        <a class="btn btn-danger" href="{% url 'posts:post_delete' post.id %}">
-          Удалить запись
-        </a>
-      {% endif %}
     </article>
   </div>
   {% include 'posts/includes/comment.html' %}

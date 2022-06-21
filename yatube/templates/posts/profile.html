@@ -1,31 +1,36 @@
 {% extends "base.html" %}
 {% block title %}Профиль - {{ author }}{% endblock %}
 {% block content %}
-  <div class="row">
-    {% include 'posts/includes/info_user.html' %}
-  </div>
-  <div class="mb-5">
-  {% if request.user != author %}
-    {% if following %}
-      <a
-          class="btn btn-lg btn-light"
-          href="{% url 'posts:profile_unfollow' author.username %}"
-          role="button">
-        Отписаться
-      </a>
-    {% else %}
-      <a
-          class="btn btn-lg btn-primary"
-          href="{% url 'posts:profile_follow' author.username %}" role="button">
-        Подписаться
-      </a>
-    {% endif %}
-  {% endif %}
-  </div>
-  <div class="col-md-9">
-    {% for post in page_obj %}
-      {% include 'posts/includes/separate_post.html' %}
-    {% endfor %}
-    {% include "includes/paginator.html" %}
+  <div class="container py-4">
+    <div class="row">
+      <aside class="col-12 col-md-3">
+        {% include 'posts/includes/info_user.html' %}
+        <ul class="list-group list-group-flush">
+          {% if request.user != author %}
+            {% if following %}
+              <a
+                  class="btn btn-lg btn-light"
+                  href="{% url 'posts:profile_unfollow' author.username %}"
+                  role="button">
+                Отписаться
+              </a>
+            {% else %}
+              <a
+                  class="btn btn-lg btn-primary"
+                  href="{% url 'posts:profile_follow' author.username %}"
+                  role="button">
+                Подписаться
+              </a>
+            {% endif %}
+          {% endif %}
+        </ul>
+      </aside>
+      <article class="col-12 col-md-9">
+        {% for post in page_obj %}
+          {% include 'posts/includes/separate_post.html' %}
+        {% endfor %}
+        {% include "includes/paginator.html" %}
+      </article>
+    </div>
   </div>
 {% endblock %}

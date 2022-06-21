@@ -8,7 +8,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from ..models import Post, Group
+from ..models import Post, Group, Comment
 
 User = get_user_model()
 
@@ -73,6 +73,30 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(post.group.id, form_data['group'])
         self.assertEqual(post.author, self.post.author)
 
+    def test_create_comment(self):
+        """Валидная форма создает запись в Comment."""
+        comment_count = Comment.objects.count()
+        form_data = {
+            'post': self.post,
+            'text': 'Здравствуйте!А можно меня на валидность проверить?'
+        }
+        response = self.author_client.post(
+            reverse("posts:add_comment", args=(self.post.id,)),
+            data=form_data,
+            follow=True,
+        )
+        self.assertRedirects(
+            response, reverse(
+                'posts:post_detail',
+                args=(self.post.id,)),
+            target_status_code=HTTPStatus.OK, status_code=HTTPStatus.FOUND,
+        )
+        comment = Comment.objects.first()
+        self.assertEqual(Comment.objects.count(), comment_count + self.ONE)
+        self.assertEqual(comment.post, self.post)
+        self.assertEqual(comment.author, self.post.author)
+        self.assertEqual(comment.text, form_data['text'])
+
     def test_author_edit_post(self):
         """Автор может редактировать свой пост"""
         post = Post.objects.first()
@@ -106,7 +130,7 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(posts_count, Post.objects.count)
 
     def test_guest_new_post(self):
-        """Неавторизованный пользователь не может создавать посты"""
+        """Аноним не может создавать посты"""
         posts_count = Post.objects.count()
         form_data = {
             'text': 'А можно мне пост написать? Я-Гость',
@@ -122,6 +146,30 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(posts_count, Post.objects.count())
         login_url = reverse("users:login")
         reverse_url = reverse("posts:post_create", None)
+        response = self.client.get(reverse_url, follow=True)
+        self.assertRedirects(
+            response,
+            f'{login_url}?{REDIRECT_FIELD_NAME}={reverse_url}',
+            target_status_code=HTTPStatus.OK, status_code=HTTPStatus.FOUND,
+        )
+
+    def test_guest_new_comment(self):
+        """Аноним не может создавать комментарии"""
+        comments_count = Comment.objects.count()
+        form_data = {
+            'text': 'А можно мне написать комментарий? Я-Гость',
+            'post': self.post
+        }
+        self.client.post(
+            reverse('posts:add_comment', args=(self.post.id,)),
+            data=form_data,
+            follow=True,
+        )
+        self.assertFalse(Post.objects.filter(
+            text=form_data['text']).exists())  # НЕТ!
+        self.assertEqual(comments_count, Comment.objects.count())
+        login_url = reverse("users:login")
+        reverse_url = reverse("posts:add_comment", args=(self.post.id,))
         response = self.client.get(reverse_url, follow=True)
         self.assertRedirects(
             response,
@@ -156,6 +204,7 @@ class PostCreateFormTests(TestCase):
             data=form_data,
             follow=True,
         )
+        
         self.assertTrue(
             Post.objects.filter(
                 text=form_data['text'],

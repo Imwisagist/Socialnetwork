@@ -1,6 +1,10 @@
 {% load thumbnail %}
 <div class="card mb-3 mt-1 shadow-sm">
   <div class="card-body">
+    <article>
+      {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
+        <img class="card-img my-2" src="{{ im.url }}">
+      {% endthumbnail %}
     <p class="card-text">
       {% if author %}
         <strong class="d-block text-gray-dark">
@@ -8,17 +12,13 @@
         </strong>
       {% else %}
         <strong class="d-block text-gray-dark">
-          Автор:
-          <a href="{% url 'posts:profile' post.author %}">{{ post.author.username }}</a>
+
+          <a href="{% url 'posts:profile' post.author %}">@{{ post.author.username }}</a>
         </strong>
       {% endif %}
     </p>
-    <article>
-      {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
-        <img class="card-img my-2" src="{{ im.url }}">
-      {% endthumbnail %}
       <p>
-        {{ post.text|linebreaksbr }}
+        {{ post.text|linebreaksbr|truncatechars:500}}
       </p>
     </article>
     <a class="btn btn-sm text-muted"

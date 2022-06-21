@@ -9,9 +9,9 @@ from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
-
+from django.shortcuts import get_object_or_404
 from ..forms import PostForm
-from ..models import Group, Post, Follow
+from ..models import Group, Post, Follow, Comment
 
 User = get_user_model()
 
@@ -66,6 +66,11 @@ class PostsViewsTests(TestCase):
             ("posts:follow_index", None, None),
         )
         Follow.objects.create(user=cls.user, author=cls.post.author)
+        cls.comment = Comment.objects.create(
+            text="В погоне за 100% Coverage",
+            post=cls.post,
+            author=cls.post.author,
+        )
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -85,6 +90,7 @@ class PostsViewsTests(TestCase):
             self.assertEqual(post.author, self.post.author)
             self.assertEqual(post.pub_date, self.post.pub_date)
             self.assertEqual(post.group, self.post.group)
+# image
 
     def setUp(self):
         self.authorized_client = Client()
@@ -200,6 +206,18 @@ class PostsViewsTests(TestCase):
         )
         self.assertNotContains(response, 'Комментарий от Бабайки')
 
+    def test_author_can_remove_not_author_cant_remove_comment(self):
+        """Не автор комментария не может его удалить, а автор может."""
+        comment_count = Comment.objects.count()
+        self.authorized_client.get(
+            reverse("posts:comment_delete", args=(self.comment.id,))
+        )
+        self.assertEqual(Comment.objects.count(), comment_count)
+        self.author_client.get(
+            reverse("posts:comment_delete", args=(self.comment.id,))
+        )
+        self.assertEqual(Comment.objects.count(), comment_count - self.ONE)
+
 
 class PaginatorViewsTest(TestCase):
     @classmethod
@@ -244,8 +262,7 @@ class PaginatorViewsTest(TestCase):
             for page_num, post_on_page in pages_and_post_count_tuple:
                 with self.subTest(url=reverse_name):
                     response = self.client.get(f'{url}{page_num}')
-                    self.assertEqual(len(response.context.get('page_obj')
-                                         .object_list), post_on_page)
+                    self.assertEqual(len(response.context.get('page_obj')))
 
 
 class CacheTests(TestCase):
@@ -306,6 +323,11 @@ class FollowTests(TestCase):
                     args=(self.user_following.username,))
         )
         self.assertEqual(Follow.objects.all().count(), self.ONE)
+
+        follow_obj = get_object_or_404(
+            Follow, user=self.user_follower, author=self.user_following
+        )
+        # print(follow_obj.follower)
 
     def test_follow_unfollow(self):
         """Авторизованный пользователь может отписаться"""

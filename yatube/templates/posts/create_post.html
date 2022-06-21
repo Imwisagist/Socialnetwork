@@ -14,7 +14,7 @@
           <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             {% include 'includes/form.html' %}
-            <div class="col-md-6 offset-md-4">
+            <div class="col-ыщmd-6 offset-md-4">
               <button type="submit" class="btn btn-primary">
                 {% if form.instance.pk %}Сохранить{% else %}Добавить{% endif %}
               </button>

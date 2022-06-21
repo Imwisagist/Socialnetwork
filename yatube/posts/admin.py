@@ -13,6 +13,7 @@ class PostAdmin(admin.ModelAdmin):
 
 class GroupAdmin(admin.ModelAdmin):
     list_display = ("pk", "title", "slug", "description")
+    list_editable = ('title', 'slug', 'description')
     search_fields = ("title",)
     prepopulated_fields = {"slug": ("title",)}
 

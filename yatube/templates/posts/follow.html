@@ -2,11 +2,11 @@
 {% load cache %}
 {% block title %}Последние обновления на сайте{% endblock %}
 {% block content %}
-  <h1>Избранные авторы</h1>
-  <p>Публикации</p>
-  <hr>
-  {% include 'posts/includes/switcher.html' %}
-  {% cache 20 index_page with page_obj%}
+  {% with follow=True %}
+    {% include 'posts/includes/switcher.html' %}
+  {% endwith %}
+  {% cache 20 index_page with page_obj %}
+      <h1>Избранные авторы</h1>
     {% for post in page_obj %}
       {% include 'posts/includes/separate_post.html' %}
     {% endfor %}
