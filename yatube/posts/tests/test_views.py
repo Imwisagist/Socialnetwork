@@ -318,18 +318,15 @@ class FollowTests(TestCase):
 
     def test_follow(self):
         """Авторизованный пользователь может подписаться"""
+        self.assertEqual(Follow.objects.all().count(), self.ZERO)
         self.client_follower.get(
             reverse('posts:profile_follow',
                     args=(self.user_following.username,))
         )
         self.assertEqual(Follow.objects.all().count(), self.ONE)
 
-        follow_obj = get_object_or_404(
-            Follow, user=self.user_follower, author=self.user_following
-        )
-        # print(follow_obj.follower)
 
-    def test_follow_unfollow(self):
+    def test_unfollow(self):
         """Авторизованный пользователь может отписаться"""
         self.assertEqual(Follow.objects.all().count(), self.ONE)
         self.client_follower.get(
