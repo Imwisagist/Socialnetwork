@@ -1,7 +1,5 @@
 # Socialnetwork
 
-[![CI](https://github.com/yandex-praktikum/socialnetwork/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/yandex-praktikum/socialnetwork/actions/workflows/python-app.yml)
-
 Проект Socialnetwork
 Социальная сеть
 
