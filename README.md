@@ -1,8 +1,8 @@
-# hw05_final
+# Socialnetwork
 
-[![CI](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml)
+[![CI](https://github.com/yandex-praktikum/Socialnetwork/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/yandex-praktikum/Socialnetwork/actions/workflows/python-app.yml)
 
-Проект YATUBE
+Проект Socialnetwork
 Социальная сеть
 
 Описание
